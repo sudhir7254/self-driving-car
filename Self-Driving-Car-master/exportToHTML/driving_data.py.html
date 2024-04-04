@@ -1,0 +1,78 @@
+<html>
+<head>
+<title>driving_data.py</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #cf8e6d;}
+.s1 { color: #bcbec4;}
+.s2 { color: #bcbec4;}
+.s3 { color: #7a7e85;}
+.s4 { color: #2aacb8;}
+.s5 { color: #6aab73;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+driving_data.py</font>
+</center></td></tr></table>
+<pre><span class="s0">import </span><span class="s1">cv2</span>
+<span class="s0">import </span><span class="s1">random</span>
+<span class="s0">import </span><span class="s1">numpy </span><span class="s0">as </span><span class="s1">np</span>
+
+<span class="s1">xs </span><span class="s2">= []</span>
+<span class="s1">ys </span><span class="s2">= []</span>
+
+<span class="s3">#points to the end of the last batch</span>
+<span class="s1">train_batch_pointer </span><span class="s2">= </span><span class="s4">0</span>
+<span class="s1">val_batch_pointer </span><span class="s2">= </span><span class="s4">0</span>
+
+<span class="s3">#read data.txt</span>
+<span class="s0">with </span><span class="s1">open</span><span class="s2">(</span><span class="s5">&quot;driving_dataset/data.txt&quot;</span><span class="s2">) </span><span class="s0">as </span><span class="s1">f</span><span class="s2">:</span>
+    <span class="s0">for </span><span class="s1">line </span><span class="s0">in </span><span class="s1">f</span><span class="s2">:</span>
+        <span class="s1">xs</span><span class="s2">.</span><span class="s1">append</span><span class="s2">(</span><span class="s5">&quot;driving_dataset/&quot; </span><span class="s2">+ </span><span class="s1">line</span><span class="s2">.</span><span class="s1">split</span><span class="s2">()[</span><span class="s4">0</span><span class="s2">])</span>
+        <span class="s3">#the paper by Nvidia uses the inverse of the turning radius,</span>
+        <span class="s3">#but steering wheel angle is proportional to the inverse of turning radius</span>
+        <span class="s3">#so the steering wheel angle in radians is used as the output</span>
+        <span class="s1">ys</span><span class="s2">.</span><span class="s1">append</span><span class="s2">(</span><span class="s1">float</span><span class="s2">(</span><span class="s1">line</span><span class="s2">.</span><span class="s1">split</span><span class="s2">()[</span><span class="s4">1</span><span class="s2">]) * </span><span class="s4">3.14159265 </span><span class="s2">/ </span><span class="s4">180</span><span class="s2">)</span>
+
+<span class="s3">#get number of images</span>
+<span class="s1">num_images </span><span class="s2">= </span><span class="s1">len</span><span class="s2">(</span><span class="s1">xs</span><span class="s2">)</span>
+
+<span class="s3">#shuffle list of images</span>
+<span class="s1">c </span><span class="s2">= </span><span class="s1">list</span><span class="s2">(</span><span class="s1">zip</span><span class="s2">(</span><span class="s1">xs</span><span class="s2">, </span><span class="s1">ys</span><span class="s2">))</span>
+<span class="s1">random</span><span class="s2">.</span><span class="s1">shuffle</span><span class="s2">(</span><span class="s1">c</span><span class="s2">)</span>
+<span class="s1">xs</span><span class="s2">, </span><span class="s1">ys </span><span class="s2">= </span><span class="s1">zip</span><span class="s2">(*</span><span class="s1">c</span><span class="s2">)</span>
+
+<span class="s1">train_xs </span><span class="s2">= </span><span class="s1">xs</span><span class="s2">[:</span><span class="s1">int</span><span class="s2">(</span><span class="s1">len</span><span class="s2">(</span><span class="s1">xs</span><span class="s2">) * </span><span class="s4">0.8</span><span class="s2">)]</span>
+<span class="s1">train_ys </span><span class="s2">= </span><span class="s1">ys</span><span class="s2">[:</span><span class="s1">int</span><span class="s2">(</span><span class="s1">len</span><span class="s2">(</span><span class="s1">xs</span><span class="s2">) * </span><span class="s4">0.8</span><span class="s2">)]</span>
+
+<span class="s1">val_xs </span><span class="s2">= </span><span class="s1">xs</span><span class="s2">[-</span><span class="s1">int</span><span class="s2">(</span><span class="s1">len</span><span class="s2">(</span><span class="s1">xs</span><span class="s2">) * </span><span class="s4">0.2</span><span class="s2">):]</span>
+<span class="s1">val_ys </span><span class="s2">= </span><span class="s1">ys</span><span class="s2">[-</span><span class="s1">int</span><span class="s2">(</span><span class="s1">len</span><span class="s2">(</span><span class="s1">xs</span><span class="s2">) * </span><span class="s4">0.2</span><span class="s2">):]</span>
+
+<span class="s1">num_train_images </span><span class="s2">= </span><span class="s1">len</span><span class="s2">(</span><span class="s1">train_xs</span><span class="s2">)</span>
+<span class="s1">num_val_images </span><span class="s2">= </span><span class="s1">len</span><span class="s2">(</span><span class="s1">val_xs</span><span class="s2">)</span>
+
+<span class="s0">def </span><span class="s1">LoadTrainBatch</span><span class="s2">(</span><span class="s1">batch_size</span><span class="s2">):</span>
+    <span class="s0">global </span><span class="s1">train_batch_pointer</span>
+    <span class="s1">x_out </span><span class="s2">= []</span>
+    <span class="s1">y_out </span><span class="s2">= []</span>
+    <span class="s0">for </span><span class="s1">i </span><span class="s0">in </span><span class="s1">range</span><span class="s2">(</span><span class="s4">0</span><span class="s2">, </span><span class="s1">batch_size</span><span class="s2">):</span>
+        <span class="s1">x_out</span><span class="s2">.</span><span class="s1">append</span><span class="s2">(</span><span class="s1">cv2</span><span class="s2">.</span><span class="s1">resize</span><span class="s2">(</span><span class="s1">cv2</span><span class="s2">.</span><span class="s1">imread</span><span class="s2">(</span><span class="s1">train_xs</span><span class="s2">[(</span><span class="s1">train_batch_pointer </span><span class="s2">+ </span><span class="s1">i</span><span class="s2">) % </span><span class="s1">num_train_images</span><span class="s2">])[-</span><span class="s4">150</span><span class="s2">:], (</span><span class="s4">200</span><span class="s2">, </span><span class="s4">66</span><span class="s2">)) / </span><span class="s4">255.0</span><span class="s2">)</span>
+        <span class="s1">y_out</span><span class="s2">.</span><span class="s1">append</span><span class="s2">([</span><span class="s1">train_ys</span><span class="s2">[(</span><span class="s1">train_batch_pointer </span><span class="s2">+ </span><span class="s1">i</span><span class="s2">) % </span><span class="s1">num_train_images</span><span class="s2">]])</span>
+    <span class="s1">train_batch_pointer </span><span class="s2">+= </span><span class="s1">batch_size</span>
+    <span class="s0">return </span><span class="s1">x_out</span><span class="s2">, </span><span class="s1">y_out</span>
+
+<span class="s0">def </span><span class="s1">LoadValBatch</span><span class="s2">(</span><span class="s1">batch_size</span><span class="s2">):</span>
+    <span class="s0">global </span><span class="s1">val_batch_pointer</span>
+    <span class="s1">x_out </span><span class="s2">= []</span>
+    <span class="s1">y_out </span><span class="s2">= []</span>
+    <span class="s0">for </span><span class="s1">i </span><span class="s0">in </span><span class="s1">range</span><span class="s2">(</span><span class="s4">0</span><span class="s2">, </span><span class="s1">batch_size</span><span class="s2">):</span>
+        <span class="s1">x_out</span><span class="s2">.</span><span class="s1">append</span><span class="s2">(</span><span class="s1">cv2</span><span class="s2">.</span><span class="s1">resize</span><span class="s2">(</span><span class="s1">cv2</span><span class="s2">.</span><span class="s1">imread</span><span class="s2">(</span><span class="s1">val_xs</span><span class="s2">[(</span><span class="s1">val_batch_pointer </span><span class="s2">+ </span><span class="s1">i</span><span class="s2">) % </span><span class="s1">num_val_images</span><span class="s2">])[-</span><span class="s4">150</span><span class="s2">:], (</span><span class="s4">200</span><span class="s2">, </span><span class="s4">66</span><span class="s2">)) / </span><span class="s4">255.0</span><span class="s2">)</span>
+        <span class="s1">y_out</span><span class="s2">.</span><span class="s1">append</span><span class="s2">([</span><span class="s1">val_ys</span><span class="s2">[(</span><span class="s1">val_batch_pointer </span><span class="s2">+ </span><span class="s1">i</span><span class="s2">) % </span><span class="s1">num_val_images</span><span class="s2">]])</span>
+    <span class="s1">val_batch_pointer </span><span class="s2">+= </span><span class="s1">batch_size</span>
+    <span class="s0">return </span><span class="s1">x_out</span><span class="s2">, </span><span class="s1">y_out</span>
+</pre>
+</body>
+</html>

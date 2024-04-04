@@ -1,0 +1,111 @@
+<html>
+<head>
+<title>model.py</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #cf8e6d;}
+.s1 { color: #bcbec4;}
+.s2 { color: #bcbec4;}
+.s3 { color: #2aacb8;}
+.s4 { color: #6aab73;}
+.s5 { color: #7a7e85;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+model.py</font>
+</center></td></tr></table>
+<pre><span class="s0">import </span><span class="s1">tensorflow</span><span class="s2">.</span><span class="s1">compat</span><span class="s2">.</span><span class="s1">v1 </span><span class="s0">as </span><span class="s1">tf</span>
+<span class="s1">tf</span><span class="s2">.</span><span class="s1">disable_v2_behavior</span><span class="s2">()</span>
+<span class="s0">import </span><span class="s1">scipy</span>
+
+<span class="s0">def </span><span class="s1">weight_variable</span><span class="s2">(</span><span class="s1">shape</span><span class="s2">):</span>
+  <span class="s1">initial </span><span class="s2">= </span><span class="s1">tf</span><span class="s2">.</span><span class="s1">truncated_normal</span><span class="s2">(</span><span class="s1">shape</span><span class="s2">, </span><span class="s1">stddev</span><span class="s2">=</span><span class="s3">0.1</span><span class="s2">)</span>
+  <span class="s0">return </span><span class="s1">tf</span><span class="s2">.</span><span class="s1">Variable</span><span class="s2">(</span><span class="s1">initial</span><span class="s2">)</span>
+
+<span class="s0">def </span><span class="s1">bias_variable</span><span class="s2">(</span><span class="s1">shape</span><span class="s2">):</span>
+  <span class="s1">initial </span><span class="s2">= </span><span class="s1">tf</span><span class="s2">.</span><span class="s1">constant</span><span class="s2">(</span><span class="s3">0.1</span><span class="s2">, </span><span class="s1">shape</span><span class="s2">=</span><span class="s1">shape</span><span class="s2">)</span>
+  <span class="s0">return </span><span class="s1">tf</span><span class="s2">.</span><span class="s1">Variable</span><span class="s2">(</span><span class="s1">initial</span><span class="s2">)</span>
+
+<span class="s0">def </span><span class="s1">conv2d</span><span class="s2">(</span><span class="s1">x</span><span class="s2">, </span><span class="s1">W</span><span class="s2">, </span><span class="s1">stride</span><span class="s2">):</span>
+  <span class="s0">return </span><span class="s1">tf</span><span class="s2">.</span><span class="s1">nn</span><span class="s2">.</span><span class="s1">conv2d</span><span class="s2">(</span><span class="s1">x</span><span class="s2">, </span><span class="s1">W</span><span class="s2">, </span><span class="s1">strides</span><span class="s2">=[</span><span class="s3">1</span><span class="s2">, </span><span class="s1">stride</span><span class="s2">, </span><span class="s1">stride</span><span class="s2">, </span><span class="s3">1</span><span class="s2">], </span><span class="s1">padding</span><span class="s2">=</span><span class="s4">'VALID'</span><span class="s2">)</span>
+
+<span class="s1">x </span><span class="s2">= </span><span class="s1">tf</span><span class="s2">.</span><span class="s1">placeholder</span><span class="s2">(</span><span class="s1">tf</span><span class="s2">.</span><span class="s1">float32</span><span class="s2">, </span><span class="s1">shape</span><span class="s2">=[</span><span class="s0">None</span><span class="s2">, </span><span class="s3">66</span><span class="s2">, </span><span class="s3">200</span><span class="s2">, </span><span class="s3">3</span><span class="s2">])</span>
+<span class="s1">y_ </span><span class="s2">= </span><span class="s1">tf</span><span class="s2">.</span><span class="s1">placeholder</span><span class="s2">(</span><span class="s1">tf</span><span class="s2">.</span><span class="s1">float32</span><span class="s2">, </span><span class="s1">shape</span><span class="s2">=[</span><span class="s0">None</span><span class="s2">, </span><span class="s3">1</span><span class="s2">])</span>
+
+<span class="s1">x_image </span><span class="s2">= </span><span class="s1">x</span>
+
+<span class="s5">#first convolutional layer</span>
+<span class="s1">W_conv1 </span><span class="s2">= </span><span class="s1">weight_variable</span><span class="s2">([</span><span class="s3">5</span><span class="s2">, </span><span class="s3">5</span><span class="s2">, </span><span class="s3">3</span><span class="s2">, </span><span class="s3">24</span><span class="s2">])</span>
+<span class="s1">b_conv1 </span><span class="s2">= </span><span class="s1">bias_variable</span><span class="s2">([</span><span class="s3">24</span><span class="s2">])</span>
+
+<span class="s1">h_conv1 </span><span class="s2">= </span><span class="s1">tf</span><span class="s2">.</span><span class="s1">nn</span><span class="s2">.</span><span class="s1">relu</span><span class="s2">(</span><span class="s1">conv2d</span><span class="s2">(</span><span class="s1">x_image</span><span class="s2">, </span><span class="s1">W_conv1</span><span class="s2">, </span><span class="s3">2</span><span class="s2">) + </span><span class="s1">b_conv1</span><span class="s2">)</span>
+
+<span class="s5">#second convolutional layer</span>
+<span class="s1">W_conv2 </span><span class="s2">= </span><span class="s1">weight_variable</span><span class="s2">([</span><span class="s3">5</span><span class="s2">, </span><span class="s3">5</span><span class="s2">, </span><span class="s3">24</span><span class="s2">, </span><span class="s3">36</span><span class="s2">])</span>
+<span class="s1">b_conv2 </span><span class="s2">= </span><span class="s1">bias_variable</span><span class="s2">([</span><span class="s3">36</span><span class="s2">])</span>
+
+<span class="s1">h_conv2 </span><span class="s2">= </span><span class="s1">tf</span><span class="s2">.</span><span class="s1">nn</span><span class="s2">.</span><span class="s1">relu</span><span class="s2">(</span><span class="s1">conv2d</span><span class="s2">(</span><span class="s1">h_conv1</span><span class="s2">, </span><span class="s1">W_conv2</span><span class="s2">, </span><span class="s3">2</span><span class="s2">) + </span><span class="s1">b_conv2</span><span class="s2">)</span>
+
+<span class="s5">#third convolutional layer</span>
+<span class="s1">W_conv3 </span><span class="s2">= </span><span class="s1">weight_variable</span><span class="s2">([</span><span class="s3">5</span><span class="s2">, </span><span class="s3">5</span><span class="s2">, </span><span class="s3">36</span><span class="s2">, </span><span class="s3">48</span><span class="s2">])</span>
+<span class="s1">b_conv3 </span><span class="s2">= </span><span class="s1">bias_variable</span><span class="s2">([</span><span class="s3">48</span><span class="s2">])</span>
+
+<span class="s1">h_conv3 </span><span class="s2">= </span><span class="s1">tf</span><span class="s2">.</span><span class="s1">nn</span><span class="s2">.</span><span class="s1">relu</span><span class="s2">(</span><span class="s1">conv2d</span><span class="s2">(</span><span class="s1">h_conv2</span><span class="s2">, </span><span class="s1">W_conv3</span><span class="s2">, </span><span class="s3">2</span><span class="s2">) + </span><span class="s1">b_conv3</span><span class="s2">)</span>
+
+<span class="s5">#fourth convolutional layer</span>
+<span class="s1">W_conv4 </span><span class="s2">= </span><span class="s1">weight_variable</span><span class="s2">([</span><span class="s3">3</span><span class="s2">, </span><span class="s3">3</span><span class="s2">, </span><span class="s3">48</span><span class="s2">, </span><span class="s3">64</span><span class="s2">])</span>
+<span class="s1">b_conv4 </span><span class="s2">= </span><span class="s1">bias_variable</span><span class="s2">([</span><span class="s3">64</span><span class="s2">])</span>
+
+<span class="s1">h_conv4 </span><span class="s2">= </span><span class="s1">tf</span><span class="s2">.</span><span class="s1">nn</span><span class="s2">.</span><span class="s1">relu</span><span class="s2">(</span><span class="s1">conv2d</span><span class="s2">(</span><span class="s1">h_conv3</span><span class="s2">, </span><span class="s1">W_conv4</span><span class="s2">, </span><span class="s3">1</span><span class="s2">) + </span><span class="s1">b_conv4</span><span class="s2">)</span>
+
+<span class="s5">#fifth convolutional layer</span>
+<span class="s1">W_conv5 </span><span class="s2">= </span><span class="s1">weight_variable</span><span class="s2">([</span><span class="s3">3</span><span class="s2">, </span><span class="s3">3</span><span class="s2">, </span><span class="s3">64</span><span class="s2">, </span><span class="s3">64</span><span class="s2">])</span>
+<span class="s1">b_conv5 </span><span class="s2">= </span><span class="s1">bias_variable</span><span class="s2">([</span><span class="s3">64</span><span class="s2">])</span>
+
+<span class="s1">h_conv5 </span><span class="s2">= </span><span class="s1">tf</span><span class="s2">.</span><span class="s1">nn</span><span class="s2">.</span><span class="s1">relu</span><span class="s2">(</span><span class="s1">conv2d</span><span class="s2">(</span><span class="s1">h_conv4</span><span class="s2">, </span><span class="s1">W_conv5</span><span class="s2">, </span><span class="s3">1</span><span class="s2">) + </span><span class="s1">b_conv5</span><span class="s2">)</span>
+
+<span class="s5">#FCL 1</span>
+<span class="s1">W_fc1 </span><span class="s2">= </span><span class="s1">weight_variable</span><span class="s2">([</span><span class="s3">1152</span><span class="s2">, </span><span class="s3">1164</span><span class="s2">])</span>
+<span class="s1">b_fc1 </span><span class="s2">= </span><span class="s1">bias_variable</span><span class="s2">([</span><span class="s3">1164</span><span class="s2">])</span>
+
+<span class="s1">h_conv5_flat </span><span class="s2">= </span><span class="s1">tf</span><span class="s2">.</span><span class="s1">reshape</span><span class="s2">(</span><span class="s1">h_conv5</span><span class="s2">, [-</span><span class="s3">1</span><span class="s2">, </span><span class="s3">1152</span><span class="s2">])</span>
+<span class="s1">h_fc1 </span><span class="s2">= </span><span class="s1">tf</span><span class="s2">.</span><span class="s1">nn</span><span class="s2">.</span><span class="s1">relu</span><span class="s2">(</span><span class="s1">tf</span><span class="s2">.</span><span class="s1">matmul</span><span class="s2">(</span><span class="s1">h_conv5_flat</span><span class="s2">, </span><span class="s1">W_fc1</span><span class="s2">) + </span><span class="s1">b_fc1</span><span class="s2">)</span>
+
+<span class="s1">keep_prob </span><span class="s2">= </span><span class="s1">tf</span><span class="s2">.</span><span class="s1">placeholder</span><span class="s2">(</span><span class="s1">tf</span><span class="s2">.</span><span class="s1">float32</span><span class="s2">)</span>
+<span class="s1">h_fc1_drop </span><span class="s2">= </span><span class="s1">tf</span><span class="s2">.</span><span class="s1">nn</span><span class="s2">.</span><span class="s1">dropout</span><span class="s2">(</span><span class="s1">h_fc1</span><span class="s2">, </span><span class="s1">keep_prob</span><span class="s2">)</span>
+
+<span class="s5">#FCL 2</span>
+<span class="s1">W_fc2 </span><span class="s2">= </span><span class="s1">weight_variable</span><span class="s2">([</span><span class="s3">1164</span><span class="s2">, </span><span class="s3">100</span><span class="s2">])</span>
+<span class="s1">b_fc2 </span><span class="s2">= </span><span class="s1">bias_variable</span><span class="s2">([</span><span class="s3">100</span><span class="s2">])</span>
+
+<span class="s1">h_fc2 </span><span class="s2">= </span><span class="s1">tf</span><span class="s2">.</span><span class="s1">nn</span><span class="s2">.</span><span class="s1">relu</span><span class="s2">(</span><span class="s1">tf</span><span class="s2">.</span><span class="s1">matmul</span><span class="s2">(</span><span class="s1">h_fc1_drop</span><span class="s2">, </span><span class="s1">W_fc2</span><span class="s2">) + </span><span class="s1">b_fc2</span><span class="s2">)</span>
+
+<span class="s1">h_fc2_drop </span><span class="s2">= </span><span class="s1">tf</span><span class="s2">.</span><span class="s1">nn</span><span class="s2">.</span><span class="s1">dropout</span><span class="s2">(</span><span class="s1">h_fc2</span><span class="s2">, </span><span class="s1">keep_prob</span><span class="s2">)</span>
+
+<span class="s5">#FCL 3</span>
+<span class="s1">W_fc3 </span><span class="s2">= </span><span class="s1">weight_variable</span><span class="s2">([</span><span class="s3">100</span><span class="s2">, </span><span class="s3">50</span><span class="s2">])</span>
+<span class="s1">b_fc3 </span><span class="s2">= </span><span class="s1">bias_variable</span><span class="s2">([</span><span class="s3">50</span><span class="s2">])</span>
+
+<span class="s1">h_fc3 </span><span class="s2">= </span><span class="s1">tf</span><span class="s2">.</span><span class="s1">nn</span><span class="s2">.</span><span class="s1">relu</span><span class="s2">(</span><span class="s1">tf</span><span class="s2">.</span><span class="s1">matmul</span><span class="s2">(</span><span class="s1">h_fc2_drop</span><span class="s2">, </span><span class="s1">W_fc3</span><span class="s2">) + </span><span class="s1">b_fc3</span><span class="s2">)</span>
+
+<span class="s1">h_fc3_drop </span><span class="s2">= </span><span class="s1">tf</span><span class="s2">.</span><span class="s1">nn</span><span class="s2">.</span><span class="s1">dropout</span><span class="s2">(</span><span class="s1">h_fc3</span><span class="s2">, </span><span class="s1">keep_prob</span><span class="s2">)</span>
+
+<span class="s5">#FCL 3</span>
+<span class="s1">W_fc4 </span><span class="s2">= </span><span class="s1">weight_variable</span><span class="s2">([</span><span class="s3">50</span><span class="s2">, </span><span class="s3">10</span><span class="s2">])</span>
+<span class="s1">b_fc4 </span><span class="s2">= </span><span class="s1">bias_variable</span><span class="s2">([</span><span class="s3">10</span><span class="s2">])</span>
+
+<span class="s1">h_fc4 </span><span class="s2">= </span><span class="s1">tf</span><span class="s2">.</span><span class="s1">nn</span><span class="s2">.</span><span class="s1">relu</span><span class="s2">(</span><span class="s1">tf</span><span class="s2">.</span><span class="s1">matmul</span><span class="s2">(</span><span class="s1">h_fc3_drop</span><span class="s2">, </span><span class="s1">W_fc4</span><span class="s2">) + </span><span class="s1">b_fc4</span><span class="s2">)</span>
+
+<span class="s1">h_fc4_drop </span><span class="s2">= </span><span class="s1">tf</span><span class="s2">.</span><span class="s1">nn</span><span class="s2">.</span><span class="s1">dropout</span><span class="s2">(</span><span class="s1">h_fc4</span><span class="s2">, </span><span class="s1">keep_prob</span><span class="s2">)</span>
+
+<span class="s5">#Output</span>
+<span class="s1">W_fc5 </span><span class="s2">= </span><span class="s1">weight_variable</span><span class="s2">([</span><span class="s3">10</span><span class="s2">, </span><span class="s3">1</span><span class="s2">])</span>
+<span class="s1">b_fc5 </span><span class="s2">= </span><span class="s1">bias_variable</span><span class="s2">([</span><span class="s3">1</span><span class="s2">])</span>
+
+<span class="s1">y </span><span class="s2">= </span><span class="s1">tf</span><span class="s2">.</span><span class="s1">multiply</span><span class="s2">(</span><span class="s1">tf</span><span class="s2">.</span><span class="s1">atan</span><span class="s2">(</span><span class="s1">tf</span><span class="s2">.</span><span class="s1">matmul</span><span class="s2">(</span><span class="s1">h_fc4_drop</span><span class="s2">, </span><span class="s1">W_fc5</span><span class="s2">) + </span><span class="s1">b_fc5</span><span class="s2">), </span><span class="s3">2</span><span class="s2">) </span><span class="s5">#scale the atan output</span>
+</pre>
+</body>
+</html>

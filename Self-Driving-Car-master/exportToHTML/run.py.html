@@ -1,0 +1,60 @@
+<html>
+<head>
+<title>run.py</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #cf8e6d;}
+.s1 { color: #bcbec4;}
+.s2 { color: #bcbec4;}
+.s3 { color: #7a7e85;}
+.s4 { color: #6aab73;}
+.s5 { color: #2aacb8;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+run.py</font>
+</center></td></tr></table>
+<pre><span class="s0">import </span><span class="s1">tensorflow</span><span class="s2">.</span><span class="s1">compat</span><span class="s2">.</span><span class="s1">v1 </span><span class="s0">as </span><span class="s1">tf</span>
+<span class="s1">tf</span><span class="s2">.</span><span class="s1">disable_v2_behavior</span><span class="s2">()</span>
+<span class="s0">import </span><span class="s1">model</span>
+<span class="s0">from </span><span class="s1">subprocess </span><span class="s0">import </span><span class="s1">call</span>
+<span class="s0">import </span><span class="s1">os</span>
+
+<span class="s3">#check if on windows OS</span>
+<span class="s1">windows </span><span class="s2">= </span><span class="s0">False</span>
+<span class="s0">if </span><span class="s1">os</span><span class="s2">.</span><span class="s1">name </span><span class="s2">== </span><span class="s4">'nt'</span><span class="s2">:</span>
+    <span class="s1">windows </span><span class="s2">= </span><span class="s0">True</span>
+
+<span class="s1">sess </span><span class="s2">= </span><span class="s1">tf</span><span class="s2">.</span><span class="s1">InteractiveSession</span><span class="s2">()</span>
+<span class="s1">saver </span><span class="s2">= </span><span class="s1">tf</span><span class="s2">.</span><span class="s1">train</span><span class="s2">.</span><span class="s1">Saver</span><span class="s2">()</span>
+<span class="s1">saver</span><span class="s2">.</span><span class="s1">restore</span><span class="s2">(</span><span class="s1">sess</span><span class="s2">, </span><span class="s4">&quot;save/model.ckpt&quot;</span><span class="s2">)</span>
+
+<span class="s1">img </span><span class="s2">= </span><span class="s1">cv2</span><span class="s2">.</span><span class="s1">imread</span><span class="s2">(</span><span class="s4">'steering_wheel_image.jpg'</span><span class="s2">,</span><span class="s5">0</span><span class="s2">)</span>
+<span class="s1">rows</span><span class="s2">,</span><span class="s1">cols </span><span class="s2">= </span><span class="s1">img</span><span class="s2">.</span><span class="s1">shape</span>
+
+<span class="s1">smoothed_angle </span><span class="s2">= </span><span class="s5">0</span>
+
+<span class="s1">cap </span><span class="s2">= </span><span class="s1">cv2</span><span class="s2">.</span><span class="s1">VideoCapture</span><span class="s2">(</span><span class="s5">0</span><span class="s2">)</span>
+<span class="s0">while </span><span class="s1">cv2</span><span class="s2">.</span><span class="s1">waitKey</span><span class="s2">(</span><span class="s5">10</span><span class="s2">) != </span><span class="s1">ord</span><span class="s2">(</span><span class="s4">'q'</span><span class="s2">):</span>
+    <span class="s1">ret</span><span class="s2">, </span><span class="s1">frame </span><span class="s2">= </span><span class="s1">cap</span><span class="s2">.</span><span class="s1">read</span><span class="s2">()</span>
+    <span class="s1">image </span><span class="s2">= </span><span class="s1">cv2</span><span class="s2">.</span><span class="s1">resize</span><span class="s2">(</span><span class="s1">frame</span><span class="s2">, (</span><span class="s5">200</span><span class="s2">, </span><span class="s5">66</span><span class="s2">)) / </span><span class="s5">255.0</span>
+    <span class="s1">degrees </span><span class="s2">= </span><span class="s1">model</span><span class="s2">.</span><span class="s1">y</span><span class="s2">.</span><span class="s1">eval</span><span class="s2">(</span><span class="s1">feed_dict</span><span class="s2">={</span><span class="s1">model</span><span class="s2">.</span><span class="s1">x</span><span class="s2">: [</span><span class="s1">image</span><span class="s2">], </span><span class="s1">model</span><span class="s2">.</span><span class="s1">keep_prob</span><span class="s2">: </span><span class="s5">1.0</span><span class="s2">})[</span><span class="s5">0</span><span class="s2">][</span><span class="s5">0</span><span class="s2">] * </span><span class="s5">180 </span><span class="s2">/ </span><span class="s5">3.14159265</span>
+    <span class="s0">if not </span><span class="s1">windows</span><span class="s2">:</span>
+        <span class="s1">call</span><span class="s2">(</span><span class="s4">&quot;clear&quot;</span><span class="s2">)</span>
+    <span class="s1">print</span><span class="s2">(</span><span class="s4">&quot;Predicted steering angle: &quot; </span><span class="s2">+ </span><span class="s1">str</span><span class="s2">(</span><span class="s1">degrees</span><span class="s2">) + </span><span class="s4">&quot; degrees&quot;</span><span class="s2">)</span>
+    <span class="s1">cv2</span><span class="s2">.</span><span class="s1">imshow</span><span class="s2">(</span><span class="s4">'frame'</span><span class="s2">, </span><span class="s1">frame</span><span class="s2">)</span>
+    <span class="s3">#make smooth angle transitions by turning the steering wheel based on the difference of the current angle</span>
+    <span class="s3">#and the predicted angle</span>
+    <span class="s1">smoothed_angle </span><span class="s2">+= </span><span class="s5">0.2 </span><span class="s2">* </span><span class="s1">pow</span><span class="s2">(</span><span class="s1">abs</span><span class="s2">((</span><span class="s1">degrees </span><span class="s2">- </span><span class="s1">smoothed_angle</span><span class="s2">)), </span><span class="s5">2.0 </span><span class="s2">/ </span><span class="s5">3.0</span><span class="s2">) * (</span><span class="s1">degrees </span><span class="s2">- </span><span class="s1">smoothed_angle</span><span class="s2">) / </span><span class="s1">abs</span><span class="s2">(</span><span class="s1">degrees </span><span class="s2">- </span><span class="s1">smoothed_angle</span><span class="s2">)</span>
+    <span class="s1">M </span><span class="s2">= </span><span class="s1">cv2</span><span class="s2">.</span><span class="s1">getRotationMatrix2D</span><span class="s2">((</span><span class="s1">cols</span><span class="s2">/</span><span class="s5">2</span><span class="s2">,</span><span class="s1">rows</span><span class="s2">/</span><span class="s5">2</span><span class="s2">),-</span><span class="s1">smoothed_angle</span><span class="s2">,</span><span class="s5">1</span><span class="s2">)</span>
+    <span class="s1">dst </span><span class="s2">= </span><span class="s1">cv2</span><span class="s2">.</span><span class="s1">warpAffine</span><span class="s2">(</span><span class="s1">img</span><span class="s2">,</span><span class="s1">M</span><span class="s2">,(</span><span class="s1">cols</span><span class="s2">,</span><span class="s1">rows</span><span class="s2">))</span>
+    <span class="s1">cv2</span><span class="s2">.</span><span class="s1">imshow</span><span class="s2">(</span><span class="s4">&quot;steering wheel&quot;</span><span class="s2">, </span><span class="s1">dst</span><span class="s2">)</span>
+
+<span class="s1">cap</span><span class="s2">.</span><span class="s1">release</span><span class="s2">()</span>
+<span class="s1">cv2</span><span class="s2">.</span><span class="s1">destroyAllWindows</span><span class="s2">()</span>
+</pre>
+</body>
+</html>

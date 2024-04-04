@@ -1,0 +1,79 @@
+<html>
+<head>
+<title>train.py</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #cf8e6d;}
+.s1 { color: #bcbec4;}
+.s2 { color: #bcbec4;}
+.s3 { color: #6aab73;}
+.s4 { color: #2aacb8;}
+.s5 { color: #7a7e85;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+train.py</font>
+</center></td></tr></table>
+<pre><span class="s0">import </span><span class="s1">os</span>
+<span class="s0">import </span><span class="s1">tensorflow</span><span class="s2">.</span><span class="s1">compat</span><span class="s2">.</span><span class="s1">v1 </span><span class="s0">as </span><span class="s1">tf</span>
+<span class="s1">tf</span><span class="s2">.</span><span class="s1">disable_v2_behavior</span><span class="s2">()</span>
+<span class="s0">from </span><span class="s1">tensorflow</span><span class="s2">.</span><span class="s1">core</span><span class="s2">.</span><span class="s1">protobuf </span><span class="s0">import </span><span class="s1">saver_pb2</span>
+<span class="s0">import </span><span class="s1">driving_data</span>
+<span class="s0">import </span><span class="s1">model</span>
+
+<span class="s1">LOGDIR </span><span class="s2">= </span><span class="s3">'./save'</span>
+
+<span class="s1">sess </span><span class="s2">= </span><span class="s1">tf</span><span class="s2">.</span><span class="s1">InteractiveSession</span><span class="s2">()</span>
+
+<span class="s1">L2NormConst </span><span class="s2">= </span><span class="s4">0.001</span>
+
+<span class="s1">train_vars </span><span class="s2">= </span><span class="s1">tf</span><span class="s2">.</span><span class="s1">trainable_variables</span><span class="s2">()</span>
+
+<span class="s1">loss </span><span class="s2">= </span><span class="s1">tf</span><span class="s2">.</span><span class="s1">reduce_mean</span><span class="s2">(</span><span class="s1">tf</span><span class="s2">.</span><span class="s1">square</span><span class="s2">(</span><span class="s1">tf</span><span class="s2">.</span><span class="s1">subtract</span><span class="s2">(</span><span class="s1">model</span><span class="s2">.</span><span class="s1">y_</span><span class="s2">, </span><span class="s1">model</span><span class="s2">.</span><span class="s1">y</span><span class="s2">))) + </span><span class="s1">tf</span><span class="s2">.</span><span class="s1">add_n</span><span class="s2">([</span><span class="s1">tf</span><span class="s2">.</span><span class="s1">nn</span><span class="s2">.</span><span class="s1">l2_loss</span><span class="s2">(</span><span class="s1">v</span><span class="s2">) </span><span class="s0">for </span><span class="s1">v </span><span class="s0">in </span><span class="s1">train_vars</span><span class="s2">]) * </span><span class="s1">L2NormConst</span>
+<span class="s1">train_step </span><span class="s2">= </span><span class="s1">tf</span><span class="s2">.</span><span class="s1">train</span><span class="s2">.</span><span class="s1">AdamOptimizer</span><span class="s2">(</span><span class="s4">1e-4</span><span class="s2">).</span><span class="s1">minimize</span><span class="s2">(</span><span class="s1">loss</span><span class="s2">)</span>
+<span class="s1">sess</span><span class="s2">.</span><span class="s1">run</span><span class="s2">(</span><span class="s1">tf</span><span class="s2">.</span><span class="s1">global_variables_initializer</span><span class="s2">())</span>
+
+<span class="s5"># create a summary to monitor cost tensor</span>
+<span class="s1">tf</span><span class="s2">.</span><span class="s1">summary</span><span class="s2">.</span><span class="s1">scalar</span><span class="s2">(</span><span class="s3">&quot;loss&quot;</span><span class="s2">, </span><span class="s1">loss</span><span class="s2">)</span>
+<span class="s5"># merge all summaries into a single op</span>
+<span class="s1">merged_summary_op </span><span class="s2">= </span><span class="s1">tf</span><span class="s2">.</span><span class="s1">summary</span><span class="s2">.</span><span class="s1">merge_all</span><span class="s2">()</span>
+
+<span class="s1">saver </span><span class="s2">= </span><span class="s1">tf</span><span class="s2">.</span><span class="s1">train</span><span class="s2">.</span><span class="s1">Saver</span><span class="s2">(</span><span class="s1">write_version </span><span class="s2">= </span><span class="s1">saver_pb2</span><span class="s2">.</span><span class="s1">SaverDef</span><span class="s2">.</span><span class="s1">V2</span><span class="s2">)</span>
+
+<span class="s5"># op to write logs to Tensorboard</span>
+<span class="s1">logs_path </span><span class="s2">= </span><span class="s3">'./logs'</span>
+<span class="s1">summary_writer </span><span class="s2">= </span><span class="s1">tf</span><span class="s2">.</span><span class="s1">summary</span><span class="s2">.</span><span class="s1">FileWriter</span><span class="s2">(</span><span class="s1">logs_path</span><span class="s2">, </span><span class="s1">graph</span><span class="s2">=</span><span class="s1">tf</span><span class="s2">.</span><span class="s1">get_default_graph</span><span class="s2">())</span>
+
+<span class="s1">epochs </span><span class="s2">= </span><span class="s4">30</span>
+<span class="s1">batch_size </span><span class="s2">= </span><span class="s4">100</span>
+
+<span class="s5"># train over the dataset about 30 times</span>
+<span class="s0">for </span><span class="s1">epoch </span><span class="s0">in </span><span class="s1">range</span><span class="s2">(</span><span class="s1">epochs</span><span class="s2">):</span>
+  <span class="s0">for </span><span class="s1">i </span><span class="s0">in </span><span class="s1">range</span><span class="s2">(</span><span class="s1">int</span><span class="s2">(</span><span class="s1">driving_data</span><span class="s2">.</span><span class="s1">num_images</span><span class="s2">/</span><span class="s1">batch_size</span><span class="s2">)):</span>
+    <span class="s1">xs</span><span class="s2">, </span><span class="s1">ys </span><span class="s2">= </span><span class="s1">driving_data</span><span class="s2">.</span><span class="s1">LoadTrainBatch</span><span class="s2">(</span><span class="s1">batch_size</span><span class="s2">)</span>
+    <span class="s1">train_step</span><span class="s2">.</span><span class="s1">run</span><span class="s2">(</span><span class="s1">feed_dict</span><span class="s2">={</span><span class="s1">model</span><span class="s2">.</span><span class="s1">x</span><span class="s2">: </span><span class="s1">xs</span><span class="s2">, </span><span class="s1">model</span><span class="s2">.</span><span class="s1">y_</span><span class="s2">: </span><span class="s1">ys</span><span class="s2">, </span><span class="s1">model</span><span class="s2">.</span><span class="s1">keep_prob</span><span class="s2">: </span><span class="s4">0.8</span><span class="s2">})</span>
+    <span class="s0">if </span><span class="s1">i </span><span class="s2">% </span><span class="s4">10 </span><span class="s2">== </span><span class="s4">0</span><span class="s2">:</span>
+      <span class="s1">xs</span><span class="s2">, </span><span class="s1">ys </span><span class="s2">= </span><span class="s1">driving_data</span><span class="s2">.</span><span class="s1">LoadValBatch</span><span class="s2">(</span><span class="s1">batch_size</span><span class="s2">)</span>
+      <span class="s1">loss_value </span><span class="s2">= </span><span class="s1">loss</span><span class="s2">.</span><span class="s1">eval</span><span class="s2">(</span><span class="s1">feed_dict</span><span class="s2">={</span><span class="s1">model</span><span class="s2">.</span><span class="s1">x</span><span class="s2">:</span><span class="s1">xs</span><span class="s2">, </span><span class="s1">model</span><span class="s2">.</span><span class="s1">y_</span><span class="s2">: </span><span class="s1">ys</span><span class="s2">, </span><span class="s1">model</span><span class="s2">.</span><span class="s1">keep_prob</span><span class="s2">: </span><span class="s4">1.0</span><span class="s2">})</span>
+      <span class="s1">print</span><span class="s2">(</span><span class="s3">&quot;Epoch: %d, Step: %d, Loss: %g&quot; </span><span class="s2">% (</span><span class="s1">epoch</span><span class="s2">, </span><span class="s1">epoch </span><span class="s2">* </span><span class="s1">batch_size </span><span class="s2">+ </span><span class="s1">i</span><span class="s2">, </span><span class="s1">loss_value</span><span class="s2">))</span>
+
+    <span class="s5"># write logs at every iteration</span>
+    <span class="s1">summary </span><span class="s2">= </span><span class="s1">merged_summary_op</span><span class="s2">.</span><span class="s1">eval</span><span class="s2">(</span><span class="s1">feed_dict</span><span class="s2">={</span><span class="s1">model</span><span class="s2">.</span><span class="s1">x</span><span class="s2">:</span><span class="s1">xs</span><span class="s2">, </span><span class="s1">model</span><span class="s2">.</span><span class="s1">y_</span><span class="s2">: </span><span class="s1">ys</span><span class="s2">, </span><span class="s1">model</span><span class="s2">.</span><span class="s1">keep_prob</span><span class="s2">: </span><span class="s4">1.0</span><span class="s2">})</span>
+    <span class="s1">summary_writer</span><span class="s2">.</span><span class="s1">add_summary</span><span class="s2">(</span><span class="s1">summary</span><span class="s2">, </span><span class="s1">epoch </span><span class="s2">* </span><span class="s1">driving_data</span><span class="s2">.</span><span class="s1">num_images</span><span class="s2">/</span><span class="s1">batch_size </span><span class="s2">+ </span><span class="s1">i</span><span class="s2">)</span>
+
+    <span class="s0">if </span><span class="s1">i </span><span class="s2">% </span><span class="s1">batch_size </span><span class="s2">== </span><span class="s4">0</span><span class="s2">:</span>
+      <span class="s0">if not </span><span class="s1">os</span><span class="s2">.</span><span class="s1">path</span><span class="s2">.</span><span class="s1">exists</span><span class="s2">(</span><span class="s1">LOGDIR</span><span class="s2">):</span>
+        <span class="s1">os</span><span class="s2">.</span><span class="s1">makedirs</span><span class="s2">(</span><span class="s1">LOGDIR</span><span class="s2">)</span>
+      <span class="s1">checkpoint_path </span><span class="s2">= </span><span class="s1">os</span><span class="s2">.</span><span class="s1">path</span><span class="s2">.</span><span class="s1">join</span><span class="s2">(</span><span class="s1">LOGDIR</span><span class="s2">, </span><span class="s3">&quot;model.ckpt&quot;</span><span class="s2">)</span>
+      <span class="s1">filename </span><span class="s2">= </span><span class="s1">saver</span><span class="s2">.</span><span class="s1">save</span><span class="s2">(</span><span class="s1">sess</span><span class="s2">, </span><span class="s1">checkpoint_path</span><span class="s2">)</span>
+  <span class="s1">print</span><span class="s2">(</span><span class="s3">&quot;Model saved in file: %s&quot; </span><span class="s2">% </span><span class="s1">filename</span><span class="s2">)</span>
+
+<span class="s1">print</span><span class="s2">(</span><span class="s3">&quot;Run the command line:</span><span class="s0">\n</span><span class="s3">&quot; </span><span class="s1">\</span>
+      <span class="s3">&quot;--&gt; tensorboard --logdir=./logs &quot; </span><span class="s1">\</span>
+      <span class="s3">&quot;</span><span class="s0">\n</span><span class="s3">Then open http://0.0.0.0:6006/ into your web browser&quot;</span><span class="s2">)</span>
+</pre>
+</body>
+</html>
